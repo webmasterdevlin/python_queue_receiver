@@ -37,4 +37,4 @@ if __name__ == "__main__":
     msg_bus.connect()
 
     # Start consuming messages
-    asyncio.run(msg_bus.start_consuming(AZURE_SERVICE_BUS["QueueName"], handle_received_messages))
+    asyncio.run(msg_bus.start_consuming(queue=AZURE_SERVICE_BUS["QueueName"], service_callback_handler=handle_received_messages))
