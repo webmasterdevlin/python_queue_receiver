@@ -1,11 +1,20 @@
+import os
+import sys
 import asyncio
 from typing import List
-from azure.servicebus import ServiceBusReceivedMessage
-from common.config import AZURE_SERVICE_BUS
-from common.message_bus import MessageBus  # From your message_bus.py
+from azure.servicebus import ServiceBusReceivedMessage, ServiceBusReceiveMode
 
-# Shared list to store received messages
+# Add the path to the common directory
+sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
+
+from config.azure_service_bus import QUEUE_NAMES
+from utils.azure_service_bus import MessageBus
+
 messages: List[str] = []
+# Create a MessageBus instance
+msg_bus = MessageBus()
+msg_bus.connect()
+queue = QUEUE_NAMES["batch_queue"]
 
 
 def handle_received_messages(msg: ServiceBusReceivedMessage) -> None:
@@ -19,7 +28,7 @@ def handle_received_messages(msg: ServiceBusReceivedMessage) -> None:
         msg (ServiceBusReceivedMessage): The received message.
     """
     messages.append(str(msg))
-    print(f"Received and completed message: {msg}")
+    msg_bus.acknowledge_message(queue, msg)
 
 
 if __name__ == "__main__":
@@ -32,9 +41,6 @@ if __name__ == "__main__":
     # Create the event loop
     loop = asyncio.get_event_loop()
 
-    # Create a MessageBus instance
-    msg_bus = MessageBus()
-    msg_bus.connect()
-
     # Start consuming messages
-    asyncio.run(msg_bus.start_consuming(queue=AZURE_SERVICE_BUS["QueueName"], service_callback_handler=handle_received_messages))
+    asyncio.run(
+        msg_bus.start_consuming(queue=queue, service_callback_handler=handle_received_messages))
